@@ -46,7 +46,9 @@ export class SelectComponent implements OnInit, OnDestroy {
   private overlayRef: OverlayRef | null;
   private originalOptions = [];
 
-  constructor(private vcr: ViewContainerRef, private overlay: Overlay) {}
+  constructor(private vcr: ViewContainerRef, private overlay: Overlay) {
+    this.unsubscribe$ = new Subject();
+  }
 
   get isOpen(): boolean {
     return true;

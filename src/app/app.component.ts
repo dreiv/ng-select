@@ -6,4 +6,10 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
+  items = Array.from({ length: 10000 }).map((_, i) => ({
+    id: i,
+    label: `Item #${i}`
+  }));
+
+  change($event: any) {}
 }
