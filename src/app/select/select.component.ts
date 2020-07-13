@@ -16,7 +16,7 @@ import {
   FlexibleConnectedPositionStrategy
 } from '@angular/cdk/overlay';
 import { FormControl } from '@angular/forms';
-import { Subject } from 'rxjs';
+import { Subject, Observable, fromEvent } from 'rxjs';
 import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import { TemplatePortal } from '@angular/cdk/portal';
 
@@ -39,7 +39,6 @@ export class SelectComponent implements OnInit, OnDestroy {
   @ViewChild('dropdown') dropdown: TemplateRef<any>;
 
   visibleOptions = 4;
-
   searchControl = new FormControl();
 
   private unsubscribe$: Subject<void>;
@@ -51,7 +50,7 @@ export class SelectComponent implements OnInit, OnDestroy {
   }
 
   get isOpen(): boolean {
-    return true;
+    return !!this.overlayRef;
   }
 
   get label(): any {
@@ -91,6 +90,10 @@ export class SelectComponent implements OnInit, OnDestroy {
 
     const template = new TemplatePortal(this.dropdown, this.vcr);
     this.overlayRef.attach(template);
+
+    // overlayClickOutside(this.overlayRef, this.origin)
+    //   .pipe(takeUntil(this.unsubscribe$))
+    //   .subscribe(() => this.close());
   }
 
   private close(): void {
@@ -109,6 +112,10 @@ export class SelectComponent implements OnInit, OnDestroy {
   search(value: string): void {
     this.options = this.originalOptions.filter((option) =>
       (option[this.labelKey] as any[]).includes(value)
+    );
+
+    requestAnimationFrame(
+      () => (this.visibleOptions = this.options.length || 1)
     );
   }
 
@@ -136,4 +143,22 @@ export class SelectComponent implements OnInit, OnDestroy {
       .withFlexibleDimensions(false)
       .withPush(false);
   }
+}
+
+export function overlayClickOutside(
+  overlayRef: OverlayRef,
+  origin: HTMLElement
+): Observable<MouseEvent> {
+  return fromEvent<MouseEvent>(document, 'click').pipe(
+    filter((event) => {
+      const clickTarget = event.target as HTMLElement;
+      const notOrigin = clickTarget !== origin; // the input
+      const notOverlay =
+        !!overlayRef &&
+        overlayRef.overlayElement.contains(clickTarget) === false; // the select
+
+      return notOrigin && notOverlay;
+    }),
+    takeUntil(overlayRef.detachments())
+  );
 }
